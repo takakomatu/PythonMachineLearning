@@ -127,23 +127,6 @@ def loss_accu_plot( loss_array, accuracy_array, file_name ):
 	#plt.show()
 	print "save plot"
 
-def loss_plot( loss_array, file_name ):
-	"""
-	lossとaccuracyをplotする関数
-	input
-		loss_array: loss値配列
-	output
-		loss値のplot結果を出力(loss_accuracy.png)
 
-	"""
-	
-	plt.plot(loss_array)
-	plt.xlabel('epoch')
-	plt.ylabel('loss')
-	
-	plt.savefig(file_name)
-	
-	#plt.show()
-	print "save plot"
 
 

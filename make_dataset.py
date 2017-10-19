@@ -22,111 +22,92 @@ import matplotlib.pyplot as plt
 import cv2
 import img_plot
 from sklearn.cross_validation import train_test_split
-import os
 
+def mnist_dataset():
+	"""
+	MNISTの手書き数字のデータをダウンロード
+	28x28ピクセル、70000サンプル
+	各ピクセルは0から255の値を取る（グレースケール画像）
+	mnistのデータサイズは(70000,784)
+	画像一枚は一次元になっている
+	"""
 
-def fsrcnn_preprocess():
+	print "fetch MNIST dataset"
+	mnist = fetch_mldata("MNIST original")
+	"""
+	# debug code
+	print type(mnist)
+	print mnist.data
+	print np.shape(mnist.data)
+	print mnist.data[0]
+	print np.shape(mnist.data[0])
+	"""
+
+	# chainerのお作法で、dataはfloat32にする
+	mnist.data   = mnist.data.astype(np.float32)
+	# 0 ~ 1に正規化
+	mnist.data  /= 255
+	# chainerのお作法で、targetはint32にする
+	mnist.target = mnist.target.astype(np.int32)
+	"""
+	# debug code
+	print mnist.data[0]
+	print mnist.target
+	print np.shape(mnist.target)
+	"""
+
+	"""
+	# debug code
+	#img_plot.draw_digit(mnist.data[0],28)
+	#img_plot.draw_digit(mnist.data[1000],28)
+	#img_plot.draw_digit(mnist.data[5000],28)
+	#img_plot.draw_img(mnist.data[0],28,0)
+	#img_plot.draw_img(mnist.data[0],28,1)
+	"""
+
+	# 70000データのうち60000データを訓練データに、10000データをテストに使用する
+	N = 60000
+	train_data, test_data     = np.split(mnist.data,   [N])
+	train_target, test_tatget = np.split(mnist.target, [N])
+	"""
+	# debug code
+	print "all_data",np.shape(mnist.data),np.shape(mnist.target)
+	print "train data and target",np.shape(train_data),np.shape(train_target)
+	print "test data and target",np.shape(test_data),np.shape(test_tatget)
+	"""
+
+	return train_data, train_target, test_data, test_tatget
+
+def mnist_dataset_cnn():
 	
-	print "FSRCNN_preprocess"
-
-	dir_list = os.listdir("../train/train_original/")
-	dir_list = dir_list[1:]
-	print dir_list
-
-	for x in dir_list:
-		img_gray   = cv2.imread( "../train/train_original/" + x, cv2.IMREAD_GRAYSCALE )
-		resize_img = cv2.resize( img_gray, (64,64) )
-		cv2.imwrite( "../train/train_high/" + x, resize_img )
-		resize_img = cv2.resize( resize_img, (32,32) )
-		resize_img = cv2.resize( resize_img, (64,64) )
-		cv2.imwrite( "../train/train_low/" + x, resize_img )
-
-	dir_list = os.listdir("../test/test_original/")
-	dir_list = dir_list[1:]
-	print dir_list
-
-	for x in dir_list:
-		img_gray   = cv2.imread( "../test/test_original/" + x, cv2.IMREAD_GRAYSCALE )
-		resize_img = cv2.resize( img_gray, (64,64) )
-		cv2.imwrite( "../test/test_high/" + x, resize_img )
-		resize_img = cv2.resize( resize_img, (32,32) )
-		resize_img = cv2.resize( resize_img, (64,64) )
-		cv2.imwrite( "../test/test_low/" + x, resize_img )
-
-
-def fsrcnn_dataset():
-
-	#fsrcnn_preprocess()
-
-	print "FSRCNN_dataset"
-
-	dir_list = os.listdir("../train/train_high/")
-	print dir_list,"1"
-	train_high_array = []
-	for x in dir_list:
-		img_gray   = cv2.imread( "../train/train_high/" + x, cv2.IMREAD_GRAYSCALE )
-		img_gray   = img_gray.reshape( 64 * 64 )
-		train_high_array.append( img_gray )
-
-
-	dir_list = os.listdir("../train/train_low/")
-	print dir_list,"2"
-	train_low_array  = []
-	for x in dir_list:
-		img_gray   = cv2.imread( "../train/train_low/" + x, cv2.IMREAD_GRAYSCALE )
-		img_gray   = img_gray.reshape( 64 * 64 )
-		train_low_array.append( img_gray )
-
-
-	dir_list = os.listdir("../test/test_high/")
-	print dir_list,"3"
-	dir_list = dir_list[1:]
-	test_high_array = []
-	for x in dir_list:
-		img_gray   = cv2.imread( "../test/test_high/" + x, cv2.IMREAD_GRAYSCALE )
-		img_gray   = img_gray.reshape( 64 * 64 )
-		test_high_array.append( img_gray )
-
-
-	dir_list = os.listdir("../test/test_low/")
-	print dir_list,"4"
-	dir_list = dir_list[1:]
-	test_low_array  = []
-	for x in dir_list:
-		img_gray   = cv2.imread( "../test/test_low/" + x, cv2.IMREAD_GRAYSCALE )
-		img_gray   = img_gray.reshape( 64 * 64 )
-		test_low_array.append( img_gray )
-
-	#print np.shape(train_high_array),np.shape(train_low_array)
-	#print np.shape(test_high_array),np.shape(test_low_array)
-
-
-		
-	train_high_array  =  np.array(train_high_array).astype(np.float32)
-	train_low_array   =  np.array(train_low_array).astype(np.float32)
-	test_high_array   =  np.array(test_high_array).astype(np.float32)
-	test_low_array    =  np.array(test_low_array).astype(np.float32)
-
-	train_high_array /=  255
-	train_low_array  /=  255
-	test_high_array  /=  255
-	test_low_array   /=  255
-
-	train_high_array  =  train_high_array.reshape( len(train_high_array) ,1 ,64 ,64 )
-	train_low_array   =  train_low_array.reshape(  len(train_low_array)  ,1 ,64 ,64 )
-	test_high_array   =  test_high_array.reshape(  len(test_high_array)  ,1 ,64 ,64 )
-	test_low_array    =  test_low_array.reshape(   len(test_low_array)   ,1 ,64 ,64 )
-
-	#print np.shape(train_high_array),np.shape(train_low_array)
-	#print np.shape(test_high_array),np.shape(test_low_array)
-
+	print "fetch MNIST dataset"
+	mnist = fetch_mldata("MNIST original")
 	
-	return train_high_array, train_low_array, test_high_array, test_low_array
+	# chainerのお作法で、dataはfloat32にする
+	mnist.data   = mnist.data.astype(np.float32)
+	# 0 ~ 1に正規化
+	mnist.data  /= 255
+	# chainerのお作法で、targetはint32にする
+	mnist.target = mnist.target.astype(np.int32)
 
+	# 70000枚, 1ch, tate, image_size(28 x 28)
+	mnist.data = mnist.data.reshape(70000,1,28,28)
+
+	# 70000データのうち90%を訓練データに、10%をテストに使用する
+	train_data,test_data,train_target,test_tatget = train_test_split( mnist.data, mnist.target, test_size = 0.1 )
+	#"""
+	# debug code
+	print "all_data",np.shape(mnist.data),np.shape(mnist.target)
+	print "train data and target",np.shape(train_data),np.shape(train_target)
+	print "test data and target",np.shape(test_data),np.shape(test_tatget)
+	#"""
+
+	return train_data, train_target, test_data, test_tatget
 
 
 """
 # このファイル単体で回したい場合のみコメントアウト解除
 if __name__ == "__main__":
-	fsrcnn_dataset()
+	mnist_dataset()
 """
+	
